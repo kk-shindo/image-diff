@@ -1,0 +1,11 @@
+{
+  "name": "iino-building-diff",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "looks-same": "^7.2.3",
+    "puppeteer": "^3.0.4"
+  },
+  "dependencies": {}
+}
