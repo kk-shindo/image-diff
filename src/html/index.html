@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>キャプチャくん</title>
+    <link rel="shortcut icon" href="#">
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="text-center">
+            <h1>Capture kun</h1>
+            <p>Capture and Diff Test Site & Prd Site</p>
+        </div>
+
+        <form action="./">
+            <ul id="list"></ul>
+
+            <table class="table table-dark">
+                <tbody>
+                    <tr>
+                        <th scope="row">
+                            <label for="fTestUrl">test_url</label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                name="test_url"
+                                id="fTestUrl"
+                                class="w-100"
+                                placeholder="https://test-example.com"
+                            />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="fPrdUrl">prd_url</label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                name="prd_url"
+                                id="fPrdUrl"
+                                class="w-100"
+                                placeholder="https://example.com"
+                            />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="fPageList">page_list</label>
+                        </th>
+                        <td>
+                            <textarea
+                                name="page_list"
+                                id="fPageList"
+                                class="w-100"
+                                rows="10"
+                                placeholder="/&#13;&#10;/about/&#13;&#10;/service/&#13;&#10;etc..."
+                            ></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            device
+                        </th>
+                        <td>
+                            <input
+                                type="radio"
+                                name="device"
+                                value="pc"
+                                id="fDevice1"
+                                checked
+                            />
+                            <label for="fDevice1">pc</label>
+                            <input
+                                type="radio"
+                                name="device"
+                                value="sp"
+                                id="fDevice2"
+                            />
+                            <label for="fDevice2">sp</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            headless
+                        </th>
+                        <td>
+                            <input
+                                type="radio"
+                                name="headless"
+                                value="true"
+                                id="fHeadless1"
+                                checked
+                            />
+                            <label for="fHeadless1">true</label>
+                            <input
+                                type="radio"
+                                name="headless"
+                                value="false"
+                                id="fHeadless2"
+                            />
+                            <label for="fHeadless2">false</label>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="text-center">
+                            <button
+                                onclick="formSubmit(event)"
+                                type="button"
+                                class="btn btn-outline-primary btn-lg"
+                            >
+                                submit
+                            </button>
+
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
+    </div>
+
+    <script>
+        function renderList(testList) {
+            console.log(testList)
+
+            const list = document.getElementById('list')
+            list.innerHTML = ''
+
+            const testUrl = document.querySelector('[name="test_url"]')
+            testUrl.value = ''
+
+            const prdUrl = document.querySelector('[name="prd_url"]')
+            prdUrl.value = ''
+
+            const pageList = document.querySelector('[name="page_list"]')
+            pageList.value = ''
+
+            for (let i = 0; i < testList.length; i++) {
+                const li = document.createElement('li')
+
+                const testUrl = document.createElement('p')
+                testUrl.innerText = testList[i].testUrl
+                li.appendChild(testUrl)
+
+                const prdUrl = document.createElement('p')
+                prdUrl.innerText = testList[i].prdUrl
+                li.appendChild(prdUrl)
+
+                const pageList = document.createElement('ul')
+                for(let j = 0; j < testList[i].pageList.length; j++) {
+                    const page = document.createElement('li')
+                    page.innerText = testList[i].pageList[j]
+                    pageList.appendChild(page)
+                }
+                li.appendChild(pageList)
+
+                list.appendChild(li)
+            }
+        }
+
+        async function fetchList() {
+            return fetch('/api/v1/list')
+                .then((res) => res.json())
+                .then((testList) => {
+                    console.log(testList)
+                    // renderList(testList)
+                })
+        }
+
+        async function postNewItem (item) {
+            console.log(item)
+            const body = new FormData()
+            body.append('device', item.device)
+            body.append('headless', item.headless)
+            body.append('testUrl', item.testUrl)
+            body.append('prdUrl', item.prdUrl)
+            body.append('pageList', item.pageList)
+
+            return fetch('/api/v1/add', {
+                method: 'POST',
+                body
+            })
+                .then((res) => res.json())
+        }
+
+        function formSubmit(e) {
+            e.preventDefault()
+            let formData = {}
+            const device = document.querySelector('[name="device"]:checked').value
+            const headless = document.querySelector('[name="headless"]:checked').value
+            const testUrl = document.querySelector('[name="test_url"]').value
+            const prdUrl = document.querySelector('[name="prd_url"]').value
+            const pageList = document.querySelector('[name="page_list"]').value
+
+            if (device) {
+                formData.device = device
+            }
+
+            if (headless) {
+                formData.headless = headless
+            }
+
+            if (testUrl) {
+                formData.testUrl = testUrl
+            }
+
+            if (prdUrl) {
+                formData.prdUrl = prdUrl
+            }
+
+            if (pageList) {
+                // console.log(pageList.split('\n').filter(Boolean))
+
+                formData.pageList = pageList.split('\n').filter(Boolean)
+                // formData.pageList = JSON.parse(pageList.split('\n').filter(Boolean))
+            }
+
+            if(formData) {
+                postNewItem(formData).then((item) => fetchList())
+            }
+
+            // fetch('../js/index.js')
+            // .then((res) => {
+            //     console.log(res.json)
+            // })
+        }
+
+        // 初回実行
+        fetchList()
+    </script>
+
+</body>
+</html>
